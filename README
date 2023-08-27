@@ -12,8 +12,6 @@ In order to build clicklock you need the Xlib header files.
 Installation
 ------------
 
-    autoreconf --force --install
-    ./configure
     make
     make install
 
