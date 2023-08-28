@@ -107,28 +107,14 @@ lockscreen(Display *dpy, int screen)
 	XDefineCursor(dpy, lock->win, invisible);
 	XMapRaised(dpy, lock->win);
 
-
-	/* Try to grab mouse pointer *and* keyboard, else fail the lock */
+	/* Try to grab mouse pointer else fail the lock */
 	for (len = 1000; len; len--) {
 		if (XGrabPointer(dpy, lock->root, False, ButtonPressMask | ButtonReleaseMask | PointerMotionMask,
 		    GrabModeAsync, GrabModeAsync, None, invisible, CurrentTime) == GrabSuccess)
-			break;
+			return lock;
 		usleep(1000);
 	}
-	if (!len) {
-		fprintf(stderr, "clicklock: unable to grab mouse pointer for screen %d\n", screen);
-	} else {
-		for (len = 1000; len; len--) {
-			if (XGrabKeyboard(dpy, lock->root, True, GrabModeAsync, GrabModeAsync, CurrentTime) == GrabSuccess) {
-				/* everything fine, we grabbed both inputs */
-				XSelectInput(dpy, lock->root, SubstructureNotifyMask);
-				return lock;
-			}
-			usleep(1000);
-		}
-		fprintf(stderr, "clicklock: unable to grab keyboard for screen %d\n", screen);
-	}
-	/* grabbing one of the inputs failed */
+	fprintf(stderr, "clicklock: unable to grab mouse pointer for screen %d\n", screen);
 	running = 0;
 	unlockscreen(dpy, lock);
 	return NULL;
