@@ -1,12 +1,16 @@
 clicklock - screen locker for touch kiosk devices (based on slock)
 ==================================================================
 If you need to catch the first touch event to prevent blind clicks on a
-blanked touchscreen.
+blanked touchscreen. This fork doesn't catch keyboard events, so for example
+media keys work even for blanked screen. Keyboard event still stop screen
+blanking and cause clicklock to quit when catching screen saver off
+notification.
 
 
 Requirements
 ------------
-In order to build clicklock you need the Xlib header files.
+In order to build clicklock you need the Xlib and Screen Saver extension
+header files.
 
 
 Installation
