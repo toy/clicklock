@@ -13,24 +13,11 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/scrnsaver.h>
 
-enum {
-	INIT,
-	INPUT,
-	FAILED,
-	NUMCOLS
-};
-
-static const char *colorname[NUMCOLS] = {
-	[INIT] =   "black",     /* after initialization */
-	[INPUT] =  "#005577",   /* during input */
-	[FAILED] = "#CC3333",   /* wrong password */
-};
-
 typedef struct {
 	int screen;
 	Window root, win;
 	Pixmap pmap;
-	unsigned long colors[NUMCOLS];
+	unsigned long color;
 } Lock;
 
 static Lock **locks;
@@ -55,7 +42,7 @@ unlockscreen(Display *dpy, Lock *lock)
 		return;
 
 	XUngrabPointer(dpy, CurrentTime);
-	XFreeColors(dpy, DefaultColormap(dpy, lock->screen), lock->colors, NUMCOLS, 0);
+	XFreeColors(dpy, DefaultColormap(dpy, lock->screen), &lock->color, 1, 0);
 	XFreePixmap(dpy, lock->pmap);
 	XDestroyWindow(dpy, lock->win);
 
@@ -67,7 +54,6 @@ lockscreen(Display *dpy, int screen)
 {
 	char curs[] = {0, 0, 0, 0, 0, 0, 0, 0};
 	unsigned int len;
-	int i;
 	Lock *lock;
 	XColor color, dummy;
 	XSetWindowAttributes wa;
@@ -79,14 +65,12 @@ lockscreen(Display *dpy, int screen)
 	lock->screen = screen;
 	lock->root = RootWindow(dpy, lock->screen);
 
-	for (i = 0; i < NUMCOLS; i++) {
-		XAllocNamedColor(dpy, DefaultColormap(dpy, lock->screen), colorname[i], &color, &dummy);
-		lock->colors[i] = color.pixel;
-	}
+	XAllocNamedColor(dpy, DefaultColormap(dpy, lock->screen), "black", &color, &dummy);
+	lock->color = color.pixel;
 
 	/* init */
 	wa.override_redirect = 1;
-	wa.background_pixel = lock->colors[INIT];
+	wa.background_pixel = lock->color;
 	lock->win = XCreateWindow(dpy, lock->root, 0, 0, DisplayWidth(dpy, lock->screen), DisplayHeight(dpy, lock->screen),
 	                          0, DefaultDepth(dpy, lock->screen), CopyFromParent,
 	                          DefaultVisual(dpy, lock->screen), CWOverrideRedirect | CWBackPixel, &wa);
