@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <X11/Xlib.h>
+#include <X11/extensions/scrnsaver.h>
 
 enum {
 	INIT,
@@ -45,19 +46,6 @@ die(const char *errstr, ...)
 	vfprintf(stderr, errstr, ap);
 	va_end(ap);
 	exit(1);
-}
-
-static void
-waitforevent(Display *dpy)
-{
-	XEvent ev;
-
-	running = True;
-	while (running && !XNextEvent(dpy, &ev)) {
-		if (ev.type == KeyPress || ev.type == ButtonPress) {
-			running = False;
-		}
-	}
 }
 
 static void
@@ -130,7 +118,8 @@ usage(void)
 int
 main(int argc, char **argv) {
 	Display *dpy;
-	int screen;
+	XEvent ev;
+	int screen, ssevbase, sserrbase;
 
 	if ((argc == 2) && !strcmp("-v", argv[1]))
 		die("clicklock based on: slock-%s, © 2006-2016 slock engineers\n", VERSION);
@@ -158,6 +147,10 @@ main(int argc, char **argv) {
 		return 1;
 	}
 
+	if (XScreenSaverQueryExtension(dpy, &ssevbase, &sserrbase)) {
+		XScreenSaverSelectInput(dpy, DefaultRootWindow(dpy), ScreenSaverNotifyMask);
+	}
+
 	if (argc >= 2 && fork() == 0) {
 		if (dpy)
 			close(ConnectionNumber(dpy));
@@ -165,9 +158,13 @@ main(int argc, char **argv) {
 		die("clicklock: execvp %s failed: %s\n", argv[1], strerror(errno));
 	}
 
-	waitforevent(dpy);
+	running = True;
+	while (running && !XNextEvent(dpy, &ev)) {
+		if (ev.type == ButtonPress || (ev.type == ssevbase && ((XScreenSaverNotifyEvent *)&ev)->state == ScreenSaverOff)) {
+			running = False;
+		}
+	}
 
-	/* Password ok, unlock everything and quit. */
 	for (screen = 0; screen < nscreens; screen++)
 		unlockscreen(dpy, locks[screen]);
 
