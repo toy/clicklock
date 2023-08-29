@@ -1,15 +1,12 @@
 /* See LICENSE file for license details. */
 #define _XOPEN_SOURCE 500
 
-#include <ctype.h>
 #include <errno.h>
-// #include <pwd.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <X11/Xlib.h>
 #include <X11/extensions/scrnsaver.h>
 
